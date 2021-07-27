@@ -10,16 +10,20 @@ class Equipment:
         self.asset_id = asset_id
         self.row_id = row_id
         self.operation_status = operation_status
-        Equipment.device_count = Equipment.device_count + 1
-        Equipment.operational_device_count = self.__operational_devices()
+        # Equipment.device_count = Equipment.device_count + 1
+        # Equipment.operational_device_count = self.__operational_devices()
 
     @classmethod
     def json_to_obj(cls, equipment_mandatory_json):
         return cls(**equipment_mandatory_json)
 
-    def __operational_devices(self):
-        if self.operation_status == "Operational":
-            Equipment.operational_device_count = Equipment.operational_device_count + 1
+    @staticmethod
+    def count_operational(equip_list):
+        count = 0
+        for obj in equip_list:
+            if obj.operation_status == "Operational":
+                count = count + 1
+        Equipment.operational_device_count = count
         return Equipment.operational_device_count
 
     def __repr__(self):

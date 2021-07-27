@@ -1,8 +1,10 @@
 from flask import Flask, jsonify, request
 from flask_marshmallow import Marshmallow
 import requests
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 ma = Marshmallow(app)
 
 from models.EquipmentModel import Equipment, EquipmentSchema
@@ -20,18 +22,22 @@ def retrieve_data():
     max_per_req = request.args.get('max_per_req')
 
     response = retrieve_data(total_data=int(total_data), max_per_request=int(max_per_req))
+    operational_device = 0
     for obj in response:
-        equip_list.append(Equipment(obj["AssetCategoryID"], obj["AssetID"], obj["__rowid__"], obj["OperationalStatus"]))
-
+        equipment = Equipment
+        equip_list.append(equipment(obj["AssetCategoryID"], obj["AssetID"], obj["__rowid__"], obj["OperationalStatus"]))
+    Equipment.device_count = len(equip_list)
     print(Equipment.device_count)
-    print(Equipment.operational_device_count)
+    print(Equipment.count_operational(equip_list))
+    # print(graph_data(equip_list))
 
     return jsonify({
         "Status": "Success",
         "code": 200,
         "device_count": Equipment.device_count,
         "operational_device_count": Equipment.operational_device_count,
-        "data": EquipmentSchema(many=True).dump(equip_list)
+        "equip_data": EquipmentSchema(many=True).dump(equip_list),
+        "graph_data": graph_data(equip_list)
     })
 
 
@@ -44,3 +50,17 @@ def retrieve_data(total_data, max_per_request):
         res = res + response.json()
 
     return res
+
+
+def graph_data(obj_list):
+    equips = {}
+    for obj in obj_list:
+        if obj.asset_category_id not in equips:
+            equips[obj.asset_category_id] = 1
+        else:
+            equips[obj.asset_category_id] = equips[obj.asset_category_id] + 1
+    return equips
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
